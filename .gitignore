@@ -39,3 +39,13 @@
 
 # debug information files
 *.dwo
+
+# build directory
+build/
+
+# cmake cache
+.cache/
+
+# compile commands
+compile_commands.json
+
