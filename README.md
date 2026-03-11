@@ -5,7 +5,7 @@ A high-performance, header-only C++20 implementation of the Aho-Corasick multi-p
 ## Features
 
 - **Header-only** — drop into any C++20 project with zero build steps
-- **Double-array trie** — cache-friendly, compact representation with fast traversal
+- **Double-array** — cache-friendly, compact representation with fast traversal
 - **Streaming API** — pull-based `consume()` interface; no allocation per match
 - **Pipe-composable adapters** — `filter`, `transform`, `take`, `skip`, `non_overlapping`, `left_most_non_overlapping`, `longest_non_overlapping`
 - **Binary-safe** — patterns and haystacks can contain any byte value (0x00–0xFF)
