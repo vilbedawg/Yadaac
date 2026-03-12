@@ -69,6 +69,23 @@ int main() {
 }
 ```
 
+## Design and performance
+
+Yadaac implements three optimizations on top of the standard double-array Aho-Corasick construction:
+
+- **Direct construction**: Patterns are inserted directly into the double array without building an intermediate trie, which reduces peak memory and eliminates the two-phase construction bottleneck. Experiemental results show up to 5.8x faster construction times, and 3x times less memory usage compared to trie-based construction.
+- **Bitwise vacant-slot search**: During construction, 64 candidate positions are tested in parallel using bitmask operations, giving a 2.5–3.5x speedup in vacant-slot search over a scalar scan.
+- **Transition prefilter**: Each automaton state carries a lightweight Bloom-type filter that short-circuits transition lookups for characters with no valid outgoing transition, reducing unnecessary cache misses during matching. Experiemental results show promising results especially for longer patterns.
+
+Benchmarks against a popular Rust crate [daachorse](https://github.com/daac-tools/daachorse) using three natural-language datasets from the [accompanying master's thesis](#Citation):
+
+| Metric | Result |
+|---|---|
+| Construction time | 3.7–4.4× faster |
+| Matching — word-level datasets | Comparable; typically within a few percent |
+| Matching — phrase-level dataset | Up to 10–11% faster (K = 10³–10⁵) |
+| Peak memory during construction | 50–63% lower |
+
 ## API Reference
 
 See [docs/API.md](docs/API.md) for the full API reference covering `daac`, `daac_stream`, `match`, and stream utilities.
