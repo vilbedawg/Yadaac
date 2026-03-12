@@ -98,7 +98,7 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-## Citation
+## Citation (Not yet available!)
 
 If you use Yadaac in academic work, please cite the accompanying paper:
 
