@@ -18,7 +18,9 @@ struct filtered_stream {
 
   bool consume(value_type& out) {
     while (stream.consume(out)) {
-      if (pred(out)) return true;
+      if (pred(out)) {
+        return true;
+      }
     }
     return false;
   }
@@ -72,7 +74,9 @@ struct take_stream {
   using value_type = typename Stream::value_type;
 
   bool consume(value_type& out) {
-    if (count == 0) return false;
+    if (count == 0) {
+      return false;
+    }
 
     if (stream.consume(out)) {
       count--;
@@ -102,7 +106,9 @@ struct skip_stream {
 
   bool consume(value_type& out) {
     while (count > 0) {
-      if (!stream.consume(out)) return false;
+      if (!stream.consume(out)) {
+        return false;
+      }
       count--;
     }
 
@@ -145,7 +151,7 @@ non_overlapping_stream(Stream) -> non_overlapping_stream<Stream>;
 struct non_overlapping_proxy {};
 
 template <typename Stream>
-auto operator|(Stream&& stream, non_overlapping_proxy) {
+auto operator|(Stream&& stream, non_overlapping_proxy /*unused*/) {
   return non_overlapping_stream{std::forward<Stream>(stream)};
 }
 
@@ -163,7 +169,9 @@ struct left_most_stream {
 
     while (true) {
       if (!has_pending) {
-        if (!stream.consume(pending)) return false;  // Stream empty
+        if (!stream.consume(pending)) {
+          return false;  // Stream empty
+        }
         has_pending = true;
       }
 
@@ -176,8 +184,8 @@ struct left_most_stream {
       }
 
       if (next_match.start < pending.end) {
-        bool next_is_better =
-            next_match.start < pending.start || (next_match.start == pending.start && next_match.end > pending.end);
+        bool next_is_better = next_match.start < pending.start ||
+                              (next_match.start == pending.start && next_match.end > pending.end);
         if (next_is_better) {
           pending = next_match;
         }
@@ -194,7 +202,7 @@ left_most_stream(Stream) -> left_most_stream<Stream>;
 
 struct left_most_proxy {};
 template <typename Stream>
-auto operator|(Stream&& stream, left_most_proxy) {
+auto operator|(Stream&& stream, left_most_proxy /*unused*/) {
   return left_most_stream{std::forward<Stream>(stream)};
 }
 
@@ -212,7 +220,9 @@ struct longest_match_stream {
 
     while (true) {
       if (!has_candidate) {
-        if (!stream.consume(best_candidate)) return false;  // Stream empty
+        if (!stream.consume(best_candidate)) {
+          return false;  // Stream empty
+        }
         has_candidate = true;
       }
 
@@ -227,7 +237,8 @@ struct longest_match_stream {
         size_t next_len = next_match.end - next_match.start;
 
         // Prefer left most first
-        if (next_len > best_len || (next_len == best_len && next_match.start < best_candidate.start)) {
+        if (next_len > best_len ||
+            (next_len == best_len && next_match.start < best_candidate.start)) {
           best_candidate = next_match;
         }
       } else {
@@ -247,7 +258,7 @@ longest_match_stream(Stream) -> longest_match_stream<Stream>;
 struct longest_match_proxy {};
 
 template <typename Stream>
-inline auto operator|(Stream&& stream, longest_match_proxy) {
+inline auto operator|(Stream&& stream, longest_match_proxy /*unused*/) {
   return longest_match_stream{std::forward<Stream>(stream)};
 }
 }  // namespace detail

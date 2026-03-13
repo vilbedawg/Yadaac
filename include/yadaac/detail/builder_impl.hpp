@@ -1,6 +1,7 @@
 #ifndef YADAAC_BUILDER_IMPL_HPP
 #define YADAAC_BUILDER_IMPL_HPP
 
+#include <array>
 #include <cstdint>
 #include <numeric>
 #include <queue>
@@ -20,10 +21,10 @@ constexpr size_t INSERT_SORT_THRESHOLD = 32;
 constexpr size_t ROOT_STATE_IDX = 0U;
 
 struct build_frame {
-  uint32_t state_id;
-  uint32_t left;
-  uint32_t right;
-  uint16_t depth;
+  uint32_t state_id{};
+  uint32_t left{};
+  uint32_t right{};
+  uint16_t depth{};
 };
 
 namespace kpi {
@@ -43,11 +44,15 @@ YADAAC_INLINE uint8_t unpack_key(uint32_t packed) { return static_cast<uint8_t>(
 
 class builder_impl {
  public:
-  builder_impl(const std::span<const std::string> _patterns)
-      : states(allocation::BLOCK_LEN, state{}), patterns(_patterns), num_of_states{1} {
-    if (patterns.empty()) throw std::runtime_error{"No patterns given"};
+  builder_impl(const std::span<const std::string> input_patterns)
+      : states(allocation::BLOCK_LEN, state{}), patterns(input_patterns), num_of_states{1} {
+    if (patterns.empty()) {
+      throw std::runtime_error{"No patterns given"};
+    }
 
-    if (patterns.size() > MAX_PATTERN_AMOUNT) throw std::runtime_error("Pattern count exceeds 16.7 million limit");
+    if (patterns.size() > MAX_PATTERN_AMOUNT) {
+      throw std::runtime_error("Pattern count exceeds 16.7 million limit");
+    }
 
     outputs.reserve(patterns.size());
     states.reserve(patterns.size() * 2);
@@ -59,9 +64,8 @@ class builder_impl {
     outputs.shrink_to_fit();
   }
 
-  uint32_t get_state_count() const { return num_of_states; }
+  [[nodiscard]] uint32_t get_state_count() const { return num_of_states; }
 
- public:
   std::vector<state> states;
   std::vector<output> outputs;
 
@@ -86,7 +90,9 @@ class builder_impl {
 
       uint32_t term_count = partition_and_pack(kpi_view, frame.depth);
       if (term_count > 0) {
-        if (term_count > 1) throw std::runtime_error("Duplicate patterns found");
+        if (term_count > 1) {
+          throw std::runtime_error("Duplicate patterns found");
+        }
 
         // Terminators are at the start of the view
         uint32_t patt_idx = kpi::unpack_index(kpi_view[0]);
@@ -108,7 +114,9 @@ class builder_impl {
         }
         case 2:
           // Natural sort of uint32_t works because Key is in MSB
-          if (continuations[0] > continuations[1]) std::swap(continuations[0], continuations[1]);
+          if (continuations[0] > continuations[1]) {
+            std::swap(continuations[0], continuations[1]);
+          }
           break;
         case 3 ... INSERT_SORT_THRESHOLD:
           insertion_sort(continuations);
@@ -135,7 +143,8 @@ class builder_impl {
         // Determine the range for this label
         // Since continuations are key-sorted, each label occupies one contiguous range.
         size_t range_len = 0;
-        while (kpi_offset < continuations.size() && kpi::unpack_key(continuations[kpi_offset]) == c) {
+        while (kpi_offset < continuations.size() &&
+               kpi::unpack_key(continuations[kpi_offset]) == c) {
           kpi_offset++;
           range_len++;
         }
@@ -167,10 +176,12 @@ class builder_impl {
         filter &= ~(1U << bit);
 
         // If c exists, it must live at bit + (N * 32).
-        for (int c = bit; c < ALPHABET_SIZE; c += 32) {
+        for (int c = bit; c < static_cast<int>(ALPHABET_SIZE); c += 32) {
           uint32_t child_idx = states[u].base ^ c;
 
-          if (states[child_idx].get_check() != c) continue;
+          if (states[child_idx].get_check() != c) {
+            continue;
+          }
 
           uint32_t fail = states[u].fail;
           while (u != ROOT_STATE_IDX) {
@@ -182,7 +193,9 @@ class builder_impl {
               }
             }
 
-            if (fail == ROOT_STATE_IDX) break;
+            if (fail == ROOT_STATE_IDX) {
+              break;
+            }
             fail = states[fail].fail;
           }
 
@@ -190,8 +203,8 @@ class builder_impl {
 
           uint32_t intrinsic = states[child_idx].get_output_index();
           uint32_t propagated = states[fail].get_output_index();
-          // Output index points to the first output of this node; if intrinsic exists it stays head,
-          // and we attach the fail-output chain as its parent.
+          // Output index points to the first output of this node; if intrinsic exists it
+          // stays head, and we attach the fail-output chain as its parent.
           uint32_t final_out = (intrinsic > 0) ? intrinsic : propagated;
 
           if (intrinsic > 0 && propagated > 0) {
@@ -212,7 +225,9 @@ class builder_impl {
     num_of_states++;
 
     uint32_t base = base_allocator.allocate_base(label);
-    if (base >= states.size()) extend_array();
+    if (base >= states.size()) {
+      extend_array();
+    }
 
     return base;
   }
@@ -221,7 +236,9 @@ class builder_impl {
     num_of_states += labels.size();
 
     uint32_t base = base_allocator.allocate_base(labels);
-    if (base >= states.size()) extend_array();
+    if (base >= states.size()) {
+      extend_array();
+    }
 
     return base;
   }
@@ -236,11 +253,13 @@ class builder_impl {
     states.resize(new_size, {});
   }
 
-  YADAAC_INLINE uint32_t partition_and_pack(std::span<uint32_t> kpi_view, uint32_t depth) const {
+  [[nodiscard]] YADAAC_INLINE uint32_t partition_and_pack(std::span<uint32_t> kpi_view,
+                                                          uint32_t depth) const {
     uint32_t term_count = 0;
 
     for (size_t i = 0; i < kpi_view.size(); ++i) {
-      // Even after swaps, each slot still contains an unpackable pattern index in low 24 bits.
+      // Even after swaps, each slot still contains an unpackable pattern index in low 24
+      // bits.
       uint32_t idx = kpi::unpack_index(kpi_view[i]);
 
       if (depth >= patterns[idx].size()) {
@@ -251,7 +270,7 @@ class builder_impl {
         term_count++;
       } else {
         // Found a Continuation: Pack the key in-place.
-        uint8_t key = static_cast<uint8_t>(patterns[idx][depth]);
+        auto key = static_cast<uint8_t>(patterns[idx][depth]);
         kpi_view[i] = kpi::pack(idx, key);
       }
     }
@@ -259,8 +278,8 @@ class builder_impl {
     return term_count;
   }
 
-  YADAAC_INLINE void collect_unique_labels(std::span<const uint32_t> continuations,
-                                           std::vector<uint8_t>& labels) const {
+  static YADAAC_INLINE void collect_unique_labels(std::span<const uint32_t> continuations,
+                                                  std::vector<uint8_t>& labels) {
     uint8_t prev = kpi::unpack_key(continuations[0]);
     labels.push_back(prev);
     for (size_t i = 1; i < continuations.size(); ++i) {
@@ -276,7 +295,7 @@ class builder_impl {
     const std::string& pat = patterns[pattern_idx];
 
     for (size_t d = depth; d < pat.size(); ++d) {
-      uint8_t label = static_cast<uint8_t>(pat[d]);
+      auto label = static_cast<uint8_t>(pat[d]);
 
       uint32_t base = allocate_da_node(label);
       states[state_id].base = base;
@@ -286,11 +305,11 @@ class builder_impl {
       states[state_id].set_check(label);
     }
 
-    outputs.push_back({pattern_idx, 0, (uint16_t)pat.size()});
+    outputs.push_back({pattern_idx, 0, static_cast<uint16_t>(pat.size())});
     states[state_id].set_output_index(outputs.size());
   }
 
-  YADAAC_INLINE void insertion_sort(std::span<uint32_t> continuations) const {
+  static YADAAC_INLINE void insertion_sort(std::span<uint32_t> continuations) {
     // Sorting the packed value naturally groups identical characters together
     // because the character is in the most significant bits.
     for (size_t i = 1; i < continuations.size(); ++i) {
@@ -304,44 +323,41 @@ class builder_impl {
     }
   }
 
-  YADAAC_INLINE void radix_sort(std::span<uint32_t> continuations) const {
-    constexpr int k_radix_bin = 256;
-    uint32_t counts[k_radix_bin] = {0};
+  static YADAAC_INLINE void radix_sort(std::span<uint32_t> continuations) {
+    constexpr int radix_bin = 256;
+    std::array<uint32_t, radix_bin> counts{};
 
-    std::span<uint32_t>::iterator heads_storage[k_radix_bin + 1];
-    std::span<uint32_t>::iterator* heads = heads_storage + 1;
+    std::array<std::span<uint32_t>::iterator, radix_bin + 1> heads_storage{};
+    std::span<uint32_t>::iterator* heads = heads_storage.data() + 1;
 
     for (uint32_t c : continuations) {
       counts[kpi::unpack_key(c)]++;
     }
 
     heads[-1] = heads[0] = continuations.begin();
-    for (int i = 1; i < k_radix_bin; ++i) {
+    for (int i = 1; i < radix_bin; ++i) {
       heads[i] = heads[i - 1] + counts[i - 1];
     }
 
-    for (int i = 0; i < k_radix_bin; ++i) {
+    for (int i = 0; i < radix_bin; ++i) {
       auto bucket_end = heads[i - 1] + counts[i];
 
       // Skip empty or already-sorted buckets
-      if (heads[i] == bucket_end) continue;
+      if (heads[i] == bucket_end) {
+        continue;
+      }
 
       while (heads[i] != bucket_end) {
         uint8_t tag_key = kpi::unpack_key(*heads[i]);
-        if (tag_key != i) {
-          std::iter_swap(heads[i], heads[tag_key]);
-          heads[tag_key]++;
-        } else {
-          heads[i]++;
-        }
+        std::iter_swap(heads[i], heads[tag_key]);
+        heads[tag_key]++;
       }
     }
   }
 
- private:
   const std::span<const std::string> patterns;
   allocation::base_allocator base_allocator;
-  uint32_t num_of_states;
+  uint32_t num_of_states{};
 };
 
 }  // namespace yadaac::detail::construction

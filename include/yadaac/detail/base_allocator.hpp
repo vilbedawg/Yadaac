@@ -19,8 +19,8 @@ constexpr uint32_t WORD_SHIFT = 2;
 constexpr uint32_t WORD_MASK = 3;
 
 struct alignas(64) allocator_block {
-  std::array<uint64_t, WORDS_PER_BLOCK> base_mask;
-  std::array<uint64_t, WORDS_PER_BLOCK> index_mask;
+  std::array<uint64_t, WORDS_PER_BLOCK> base_mask{};
+  std::array<uint64_t, WORDS_PER_BLOCK> index_mask{};
   void reset() {
     base_mask.fill(0);
     index_mask.fill(0);
@@ -29,7 +29,7 @@ struct alignas(64) allocator_block {
 
 class base_allocator {
  public:
-  base_allocator() : num_blocks{0}, label_cursor_cache{0} {
+  base_allocator() {
     push_block();  // Initialize with Block 0
 
     // Reserve for root
@@ -50,10 +50,13 @@ class base_allocator {
 
     while (true) {
       uint32_t block_idx = cursor >> WORD_SHIFT;
-      // Ring buffer reuses storage modulo NUM_FREE; logical block index keeps monotonic progress.
+      // Ring buffer reuses storage modulo NUM_FREE; logical block index keeps monotonic
+      // progress.
       uint32_t ring_idx = block_idx & RING_MASK;
 
-      if (block_idx >= num_blocks) push_block();
+      if (block_idx >= num_blocks) {
+        push_block();
+      }
 
       if (free_counts[ring_idx] < labels.size()) {
         cursor = (block_idx + 1) << WORD_SHIFT;
@@ -84,7 +87,8 @@ class base_allocator {
 
     while (true) {
       uint32_t block_idx = cursor >> WORD_SHIFT;
-      // Ring buffer reuses storage modulo NUM_FREE; logical block index keeps monotonic progress.
+      // Ring buffer reuses storage modulo NUM_FREE; logical block index keeps monotonic
+      // progress.
       uint32_t ring_idx = block_idx & RING_MASK;
 
       if (block_idx >= num_blocks) {
@@ -122,13 +126,15 @@ class base_allocator {
   }
 
  private:
-  YADAAC_INLINE uint32_t scan_block_for_labels(allocator_block& block, uint8_t start_word,
-                                               std::span<const uint8_t> labels) {
+  static YADAAC_INLINE uint32_t scan_block_for_labels(allocator_block& block, uint8_t start_word,
+                                                      std::span<const uint8_t> labels) {
     for (uint8_t w = start_word; w < WORDS_PER_BLOCK; ++w) {
       uint64_t valid = ~block.base_mask[w];
 
       // If this word is full, try the next one.
-      if (valid == 0) continue;
+      if (valid == 0) {
+        continue;
+      }
 
       uint32_t curr_target_idx = std::numeric_limits<uint32_t>::max();
       uint64_t curr_child_mask = 0;
@@ -148,10 +154,13 @@ class base_allocator {
           }
         }
 
-        // xor_permute projects occupied child bits back to incompatible base bits for this label.
+        // xor_permute projects occupied child bits back to incompatible base bits for this
+        // label.
         valid &= ~xor_permute(curr_child_mask, c & 63);
 
-       if (valid == 0) break;
+        if (valid == 0) {
+          break;
+        }
       }
 
       if (valid != 0) {
@@ -175,7 +184,8 @@ class base_allocator {
     return std::numeric_limits<uint32_t>::max();
   }
 
-  YADAAC_INLINE uint32_t scan_block_for_label(allocator_block& block, uint8_t start_word, uint8_t label) {
+  static YADAAC_INLINE uint32_t scan_block_for_label(allocator_block& block, uint8_t start_word,
+                                                     uint8_t label) {
     // Pre-calculate label masks once per block
     uint8_t label_high = label >> 6;
     uint8_t label_low = label & 63;
@@ -184,7 +194,9 @@ class base_allocator {
       uint64_t valid = ~block.base_mask[w];
 
       // Skip if word is full
-      if (valid == 0) continue;
+      if (valid == 0) {
+        continue;
+      }
 
       uint8_t target_word_idx = w ^ label_high;
       uint64_t child_occupied = block.index_mask[target_word_idx];
@@ -215,13 +227,14 @@ class base_allocator {
     num_blocks++;
   }
 
-  YADAAC_INLINE uint64_t xor_permute(uint64_t mask, uint8_t shift) const {
+  [[nodiscard]] static YADAAC_INLINE uint64_t xor_permute(uint64_t mask, uint8_t shift) {
     // Reindexes bits by XOR with `shift`: out[i] = in[i ^ shift].
     // This is used to map child occupancy constraints onto base-bit positions.
     // Performs a swap of bits separated by 'dist' if the corresponding bit in 'shift' is set.
-    const auto delta_swap = [&](uint64_t x, uint64_t k_mask, int dist, int shift_bit_index) {
+    const auto delta_swap = [](uint64_t x, uint64_t k_mask, int dist, int shift_bit_index,
+                               uint8_t s) {
       // Create a mask of all 1s if the bit is set, 0s otherwise
-      uint64_t enabled = -((uint64_t)((shift >> shift_bit_index) & 1));
+      uint64_t enabled = -static_cast<uint64_t>((s >> shift_bit_index) & 1);
 
       // Calculate the swap delta
       // x ^ (x >> dist) finds bits that are different between position i and i+dist
@@ -231,33 +244,24 @@ class base_allocator {
       return x ^ t ^ (t << dist);
     };
 
-    mask = delta_swap(mask, 0x5555555555555555ULL, 1, 0);
-    mask = delta_swap(mask, 0x3333333333333333ULL, 2, 1);
-    mask = delta_swap(mask, 0x0F0F0F0F0F0F0F0FULL, 4, 2);
-    mask = delta_swap(mask, 0x00FF00FF00FF00FFULL, 8, 3);
-    mask = delta_swap(mask, 0x0000FFFF0000FFFFULL, 16, 4);
-    mask = delta_swap(mask, 0x00000000FFFFFFFFULL, 32, 5);
+    mask = delta_swap(mask, 0x5555555555555555ULL, 1, 0, shift);
+    mask = delta_swap(mask, 0x3333333333333333ULL, 2, 1, shift);
+    mask = delta_swap(mask, 0x0F0F0F0F0F0F0F0FULL, 4, 2, shift);
+    mask = delta_swap(mask, 0x00FF00FF00FF00FFULL, 8, 3, shift);
+    mask = delta_swap(mask, 0x0000FFFF0000FFFFULL, 16, 4, shift);
+    mask = delta_swap(mask, 0x00000000FFFFFFFFULL, 32, 5, shift);
 
     return mask;
   }
 
-  size_t count_vacant_in_block(const allocator_block& block) const {
-    size_t occupied_count = 0;
-    for (uint64_t word : block.index_mask) {
-      occupied_count += std::popcount(word);
-    }
-    return BLOCK_LEN - occupied_count;
-  }
-
- private:
   uint32_t num_blocks = 0;
 
   // Caches the next search position for each label (0-255).
   // This allows us to resume searching exactly where we left off, skipping
   // blocks and words we've already proven are full for a specific label.
-  std::array<uint32_t, 256> label_cursor_cache;
-  std::array<uint16_t, NUM_FREE> free_counts;
-  std::array<allocator_block, NUM_FREE> blocks;
+  std::array<uint32_t, 256> label_cursor_cache{};
+  std::array<uint16_t, NUM_FREE> free_counts{};
+  std::array<allocator_block, NUM_FREE> blocks{};
 };
 
 }  // namespace yadaac::detail::allocation

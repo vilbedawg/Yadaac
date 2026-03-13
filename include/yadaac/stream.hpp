@@ -10,16 +10,16 @@
 namespace yadaac {
 
 struct match {
-  size_t start;
-  size_t end;
-  uint32_t value;
+  size_t start{};
+  size_t end{};
+  uint32_t value{};
 };
 
 class daac_stream {
  public:
   using value_type = match;
 
-  inline daac_stream(const daac* pma, std::string_view haystack)
+  daac_stream(const daac* pma, std::string_view haystack)
       : states(pma->states),
         outputs(pma->outputs),
         text_curr(haystack.data()),
@@ -36,9 +36,11 @@ class daac_stream {
         return true;
       }
 
-      if (text_curr == text_end) return false;
+      if (text_curr == text_end) {
+        return false;
+      }
 
-      uint8_t c = static_cast<uint8_t>(*text_curr++);
+      auto c = static_cast<uint8_t>(*text_curr++);
       pos++;
 
       while (true) {
@@ -50,7 +52,9 @@ class daac_stream {
           }
         }
 
-        if (state_idx == 0) break;
+        if (state_idx == 0) {
+          break;
+        }
 
         state_idx = states[state_idx].fail;
       }
@@ -60,8 +64,8 @@ class daac_stream {
   }
 
  private:
-  const std::span<const detail::state> states;
-  const std::span<const detail::output> outputs;
+  std::span<const detail::state> states;
+  std::span<const detail::output> outputs;
   const char* text_curr;
   const char* text_end;
   uint32_t pos = 0;
@@ -74,4 +78,3 @@ daac_stream daac::make_stream(std::string_view haystack) const { return {this, h
 }  // namespace yadaac
 
 #endif
-

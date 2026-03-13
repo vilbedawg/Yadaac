@@ -8,17 +8,17 @@
 #include <cstddef>
 
 #if defined(__GNUC__) || defined(__clang__)
-    #define YADAAC_INLINE inline __attribute__((always_inline))
-    #define YADAAC_LIKELY(x) __builtin_expect(!!(x), 1)
-    #define YADAAC_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#  define YADAAC_INLINE inline __attribute__((always_inline))
+#  define YADAAC_LIKELY(x) __builtin_expect(!!(x), 1)
+#  define YADAAC_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #elif defined(_MSC_VER)
-    #define YADAAC_INLINE __forceinline
-    #define YADAAC_LIKELY(x) (x)
-    #define YADAAC_UNLIKELY(x) (x)
+#  define YADAAC_INLINE __forceinline
+#  define YADAAC_LIKELY(x) (x)
+#  define YADAAC_UNLIKELY(x) (x)
 #else
-    #define YADAAC_INLINE inline
-    #define YADAAC_LIKELY(x) (x)
-    #define YADAAC_UNLIKELY(x) (x)
+#  define YADAAC_INLINE inline
+#  define YADAAC_LIKELY(x) (x)
+#  define YADAAC_UNLIKELY(x) (x)
 #endif
 
 namespace yadaac {

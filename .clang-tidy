@@ -1,0 +1,45 @@
+Checks: >
+  -*,
+  bugprone-*,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  readability-*,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -readability-magic-numbers,
+  -misc-non-private-member-variables-in-classes,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
+  -readability-function-cognitive-complexity,
+  -cppcoreguidelines-macro-usage,
+  -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-avoid-const-or-ref-data-members,
+  -cppcoreguidelines-rvalue-reference-param-not-moved,
+  -misc-include-cleaner,
+  -readability-implicit-bool-conversion,
+  -misc-const-correctness,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-missing-std-forward,
+  -bugprone-branch-clone,
+  -cppcoreguidelines-init-variables,
+  -modernize-use-integer-sign-comparison
+
+WarningsAsErrors: ''
+
+HeaderFilterRegex: 'include/yadaac/.*\.hpp$'
+
+CheckOptions:
+  - key: readability-identifier-naming.ClassCase
+    value: lower_case
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: UPPER_CASE
