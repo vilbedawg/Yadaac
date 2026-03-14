@@ -161,7 +161,7 @@ struct left_most_stream {
   Stream stream;
   using value_type = typename Stream::value_type;
 
-  value_type pending;
+  value_type pending{};
   bool has_pending = false;
 
   bool consume(value_type& out) {
@@ -212,7 +212,7 @@ struct longest_match_stream {
   Stream stream;
   using value_type = typename Stream::value_type;
 
-  value_type best_candidate;
+  value_type best_candidate{};
   bool has_candidate = false;
 
   bool consume(value_type& out) {

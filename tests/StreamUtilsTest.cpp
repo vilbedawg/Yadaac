@@ -24,12 +24,6 @@ auto collect_stream(Stream&& s) {
   return results;
 }
 
-// Helper to build automaton and collect all matches
-std::vector<match> collect(daac& automaton, std::string_view haystack) {
-  auto stream = automaton.make_stream(haystack);
-  return collect_stream(stream);
-}
-
 // ===================== Filter Tests =====================
 
 TEST(StreamUtilsTest, FilterByValue) {
