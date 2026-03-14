@@ -28,7 +28,7 @@ Checks: >
   -cppcoreguidelines-init-variables,
   -modernize-use-integer-sign-comparison
 
-WarningsAsErrors: ''
+WarningsAsErrors: '*'
 
 HeaderFilterRegex: 'include/yadaac/.*\.hpp$'
 

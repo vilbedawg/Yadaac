@@ -4,7 +4,8 @@ A high-performance, header-only C++20 implementation of the Aho-Corasick multi-p
 
 ## Requirements
 
-- C++20 compiler (GCC 10+, Clang 12+, MSVC 19.29+)
+Windows is not currently supported.
+- C++20 compiler (GCC 10+, Clang 12+).
 - CMake 3.20+ (for building tests)
 
 ## Installation
