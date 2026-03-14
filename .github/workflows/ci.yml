@@ -50,7 +50,7 @@ jobs:
         run: ctest --test-dir build --output-on-failure
 
       - name: Run clang-tidy
-        run: find tests -name '*.cpp' | xargs clang-tidy-17 -p build
+        run: clang-tidy-17 $(find include -name '*.hpp') -- -std=c++20 -Iinclude
 
   lint:
     name: Lint
