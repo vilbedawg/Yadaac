@@ -4,7 +4,6 @@ A high-performance, header-only C++20 implementation of the Aho-Corasick multi-p
 
 ## Requirements
 
-Windows is not currently supported.
 - C++20 compiler (GCC 10+, Clang 12+).
 - CMake 3.20+ (for building tests)
 
@@ -89,12 +88,12 @@ Benchmarks against a popular Rust crate [daachorse](https://github.com/daac-tool
 
 ## API Reference
 
-See [docs/API.md](docs/API.md) for the full API reference covering `daac`, `daac_stream`, `match`, and stream utilities.
+See [docs/API.md](docs/API.md) for the full API reference.
 
 ## Building Tests
 
 ```bash
-cmake -B build -DBUILD_TESTING=ON
+cmake -B build
 cmake --build build
 ctest --test-dir build --output-on-failure
 ```
