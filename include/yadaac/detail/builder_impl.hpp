@@ -104,26 +104,22 @@ class builder_impl {
       // The rest of the view contains patterns that continue deeper.
       auto continuations = kpi_view.subspan(term_count);
 
-      switch (continuations.size()) {
-        case 0:  // Nothing to do
-          continue;
-        case 1: {  // Handle tail optimization (single patterns)
-          uint32_t patt_idx = kpi::unpack_index(continuations[0]);
-          emit_linear_tail(frame.state_id, frame.depth, patt_idx);
-          continue;
-        }
-        case 2:
-          // Natural sort of uint32_t works because Key is in MSB
-          if (continuations[0] > continuations[1]) {
-            std::swap(continuations[0], continuations[1]);
-          }
-          break;
-        case 3 ... INSERT_SORT_THRESHOLD:
-          insertion_sort(continuations);
-          break;
-        default:
-          radix_sort(continuations);
-          break;
+      if (continuations.size() == 0) {  // nothing to do
+        continue;
+      }
+
+      if (continuations.size() == 1) {  // Handle tail optimization
+        uint32_t patt_idx = kpi::unpack_index(continuations[0]);
+        emit_linear_tail(frame.state_id, frame.depth, patt_idx);
+        continue;
+      }
+
+      if (continuations.size() == 2 && continuations[0] > continuations[1]) {
+        std::swap(continuations[0], continuations[1]);
+      } else if (continuations.size() <= INSERT_SORT_THRESHOLD) {
+        insertion_sort(continuations);
+      } else {
+        radix_sort(continuations);
       }
 
       collect_unique_labels(continuations, labels);
