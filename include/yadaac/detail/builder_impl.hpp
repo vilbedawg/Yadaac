@@ -104,7 +104,7 @@ class builder_impl {
       // The rest of the view contains patterns that continue deeper.
       auto continuations = kpi_view.subspan(term_count);
 
-      if (continuations.size() == 0) {  // nothing to do
+      if (continuations.empty()) {  // nothing to do
         continue;
       }
 
