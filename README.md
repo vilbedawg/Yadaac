@@ -98,14 +98,14 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-## Citation (Not yet available!)
+## Citation
 
-If you use Yadaac in academic work, please cite the accompanying paper:
+If you use Yadaac in academic work, please cite the accompanying [paper](https://trepo.tuni.fi/handle/10024/237151):
 
 ```bibtex
-@mastersthesis{TODO,
+@mastersthesis{Luoma2026,
     author  = {Luoma, Vilho},
-    title   = {Kaksoistaulukkoisen Aho-Corasick-automaatin optimoinnit},
+    title   = {Kaksoistaulukkoisen {Aho-Corasick}-automaatin optimoinnit},
     year    = {2026},
     month   = {May},
     school  = {Tampereen yliopisto},
