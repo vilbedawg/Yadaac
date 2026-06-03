@@ -17,7 +17,7 @@ Copy the `include/yadaac/` directory into your project and add the include path.
 
 ```cmake
 add_subdirectory(vendor/yadaac)
-target_link_libraries(my_target PRIVATE yadaac)
+target_link_libraries(my_target PRIVATE yadaac::yadaac)
 ```
 
 ### Option 3: CMake FetchContent
@@ -30,7 +30,19 @@ FetchContent_Declare(
     GIT_TAG main
 )
 FetchContent_MakeAvailable(yadaac)
-target_link_libraries(my_target PRIVATE yadaac)
+target_link_libraries(my_target PRIVATE yadaac::yadaac)
+```
+
+### Option 4: System install + find_package
+
+```bash
+cmake -B build -DCMAKE_INSTALL_PREFIX=/usr/local
+cmake --install build
+```
+
+```cmake
+find_package(yadaac REQUIRED)
+target_link_libraries(my_target PRIVATE yadaac::yadaac)
 ```
 
 ## Quick Start
